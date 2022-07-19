@@ -1,8 +1,22 @@
 import os
+import sys
 import uuid
 import queue
 import threading
 import portalocker
+
+def get_home_dir():
+    '''
+    获得家目录
+    :return:
+    '''
+    if sys.platform == 'win32':
+        homedir = os.environ['USERPROFILE']
+    elif sys.platform == 'linux' or sys.platform == 'darwin':
+        homedir = os.environ['HOME']
+    else:
+        raise NotImplemented(f'Error! Not this system. {sys.platform}')
+    return homedir
 
 class ProcessLock():
     """ 进程锁 """
@@ -16,7 +30,7 @@ class ProcessLock():
                     True : 等待锁释放
                     False : 如果锁被占用抛出AlreadyLocked异常
         """
-        tmp_path = ".ProcessLockTmp"
+        tmp_path = os.path.join(get_home_dir(), ".ProcessLockTmp")
         if not os.path.exists(tmp_path):
             os.mkdir(tmp_path)
 
