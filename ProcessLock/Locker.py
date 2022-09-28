@@ -51,31 +51,28 @@ class ProcessLock():
             self._fail_when_locked = True
 
     def acquire(self):
-        create_event = threading.Event()
-        create_event.clear()
+        run_acquire_info_queue = queue.Queue()
         def sub():
-            self._run_acquire_info_queue = queue.Queue()
-            create_event.set()
             try:
                 with portalocker.Lock(self.id, 'w', check_interval=self._check_interval, timeout=self._timeout, fail_when_locked=self._fail_when_locked) as fh:
                     self._lock_queue = queue.Queue()
-                    self._run_acquire_info_queue.put("OK")
+                    run_acquire_info_queue.put("OK")
                     try:
                         self._lock_queue.get()
+                        del self._lock_queue
                     finally:
                         # flush and sync to filesystem
                         fh.flush()
                         os.fsync(fh.fileno())
             except Exception as err:
                 # only portalocker.AlreadyLocked
-                self._run_acquire_info_queue.put(err)
+                run_acquire_info_queue.put(err)
 
         acquire_th = threading.Thread(target=sub)
         acquire_th.setDaemon(True)
         acquire_th.start()
 
-        create_event.wait()
-        run_acquire_info = self._run_acquire_info_queue.get()
+        run_acquire_info = run_acquire_info_queue.get()
         if run_acquire_info != "OK":
             raise portalocker.AlreadyLocked(run_acquire_info)
 
@@ -84,8 +81,6 @@ class ProcessLock():
             self._lock_queue.put(True)
         except AttributeError:
             raise RuntimeError("release unlocked lock")
-        else:
-            del self._lock_queue
 
     def locked(self) -> bool:
         try:

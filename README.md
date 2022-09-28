@@ -19,7 +19,7 @@
     finally:
         p_lock.release()
 
-用法和普通的锁一样，`acquire`、`release`、`locked`，唯一的区别是这个锁不需要传参，可以通知设置锁的id来在同一机器上获取到同一把锁
+用法和普通的锁一样，`acquire`、`release`、`locked`，唯一的区别是这个锁不需要传参，可以通过设置锁的id来在同一机器上获取到同一把锁
 
 进程1
 ```
