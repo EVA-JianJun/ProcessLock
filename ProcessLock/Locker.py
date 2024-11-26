@@ -69,7 +69,7 @@ class ProcessLock():
                 run_acquire_info_queue.put(err)
 
         acquire_th = threading.Thread(target=sub)
-        acquire_th.setDaemon(True)
+        acquire_th.daemon = True
         acquire_th.start()
 
         run_acquire_info = run_acquire_info_queue.get()
